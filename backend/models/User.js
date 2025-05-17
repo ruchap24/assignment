@@ -2,11 +2,14 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const Schema = mongoose.Schema;
 
-const UserSchema = new Schema({
+const UserSchema = new mongoose.Schema({
   email: {
     type: String,
-    required: true,
+    required: [true, 'Email is required'],
     unique: true,
+    trim: true,
+    lowercase: true,
+    match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email']
     // validate: {
     //   validator: function (v) {
     //     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -16,7 +19,8 @@ const UserSchema = new Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: [true, 'Password is required'],
+    minlength: [8, 'Password must be at least 8 characters long']
     // validate: {
     //   validator: function (v) {
     //     // Validate password to have at least one lowercase, one uppercase, one number, and minimum 8 characters
@@ -26,6 +30,12 @@ const UserSchema = new Schema({
     //     "Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one number.",
     // },
   },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+}, {
+  timestamps: true
 });
 
 UserSchema.pre("save", async function (next) {
