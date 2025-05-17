@@ -2,7 +2,8 @@ import { createContext, useContext, useState, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { registerUser } from "../services/api";
-// schema
+
+// Enhanced schema with more detailed validation
 const schema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   password: z
@@ -43,40 +44,88 @@ export const RegisterFormProvider: React.FC<{ children: ReactNode }> = ({
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [showPassword, setshowPassword] = useState<boolean>(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const validationResult = schema.safeParse({
-      email,
-      password,
-      confirmPassword,
-    });
-    if (!validationResult.success) {
-      const validationErrors = validationResult.error.errors.reduce(
-        (acc, error) => {
-          acc[error.path[0] as string] = error.message;
-          return acc;
-        },
-        {} as Record<string, string>,
-      );
-      setErrors(validationErrors);
-      return;
-    }
-    if (password !== confirmPassword) {
-      alert("Passwords do not match!");
-      return;
-    }
+  const validateForm = () => {
     try {
-      const response = await registerUser({ email, password });
-      alert("Registration successful");
-      navigate("/login");
-    } catch (err) {
-      console.error("Error registering user");
+      // Validate entire form data
+      schema.parse({ 
+        email, 
+        password, 
+        confirmPassword 
+      });
+      return true;
+    } catch (validationError) {
+      if (validationError instanceof z.ZodError) {
+        const errorMap: {[key: string]: string} = {};
+        validationError.errors.forEach(err => {
+          errorMap[err.path[0]] = err.message;
+        });
+        setErrors(errorMap);
+      }
+      return false;
     }
-  }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Reset previous errors
+    setErrors({});
+    setIsSubmitting(true);
+
+    // Validate form before submission
+    if (!validateForm()) {
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Passwords match validation
+    if (password !== confirmPassword) {
+      setErrors({ 
+        confirmPassword: "Passwords do not match" 
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const userData = { 
+        email, 
+        password, 
+        confirmPassword 
+      };
+      
+      console.log("Attempting Registration:", userData);
+      
+      const response = await registerUser(userData);
+      
+      console.log("Registration Successful:", response);
+      
+      // Optional: Show success message
+      setErrors({
+        form: "Registration successful! Redirecting to login..."
+      });
+      
+      // Redirect after a short delay
+      setTimeout(() => {
+        navigate('/login');
+      }, 1500);
+    } catch (err: any) {
+      console.error("Registration Error:", err);
+      
+      // More detailed error handling
+      setErrors({
+        form: err.message || "Registration failed. Please try again."
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <RegisterFormContext.Provider
       value={{

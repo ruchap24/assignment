@@ -1,11 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import { userRegisterForm } from "../../../contexts/RegisterFormContext";
 import EmailInput from "../components/EmailInput";
 import PasswordInput from "../components/PasswordInput";
 import ConfirmPasswordInput from "../components/ConfirmPasswordInput";
 import FormWrapper from "../components/FormWrapper";
-
-
 
 function RegisterForm() {
  const {
@@ -21,38 +19,29 @@ function RegisterForm() {
    handleSubmit,
  } = userRegisterForm();
 
-  function handleEmail(e: React.ChangeEvent<HTMLInputElement>) {
-    setEmail(e.target.value);
-  }
-  function handlePassword(e: React.ChangeEvent<HTMLInputElement>) {
-    setPassword(e.target.value);
-  }
-  function handleConfirmPassword(e: React.ChangeEvent<HTMLInputElement>) {
-    setConfirmPassword(e.target.value);
-  }
-  function handlePasswordVisibility() {
-    setshowPassword(!showPassword);
-  }
-
-  ///////////////////////////////////////////////////////////////
-  // JSX
+  // Enhanced error display
   return (
     <div className="p-12">
       <FormWrapper title="Register" handleSubmit={handleSubmit}>
-        <EmailInput email={email} handleEmail={handleEmail} errors={errors} />
+        <EmailInput 
+          email={email} 
+          handleEmail={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}           errors={errors} 
+        />
         <PasswordInput
           password={password}
-          handlePassword={handlePassword}
+          handlePassword={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
           showPassword={showPassword}
-          handlePasswordVisibility={handlePasswordVisibility}
+          handlePasswordVisibility={() => setshowPassword(!showPassword)}
           errors={errors}
         />
         <ConfirmPasswordInput
           confirmPassword={confirmPassword}
-          handleConfirmPassword={handleConfirmPassword}
-          errors={errors}
+          handleConfirmPassword={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}          errors={errors}
         />
-        <p >
+        {errors.form && (
+          <p className="text-red-500 text-sm">{errors.form}</p>
+        )}
+        <p>
           Already have an account? <a href="/login" className="underline text-blue-500">Log In</a>
         </p>
       </FormWrapper>
